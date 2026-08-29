@@ -36,6 +36,4 @@ class SafetyMonitor:
 
     def check_command(self, speed: float) -> None:
         if abs(speed) > self.max_speed:
-            raise SafetyViolation(
-                f"commanded speed {speed} exceeds max_speed {self.max_speed}"
-            )
+            raise SafetyViolation(f"commanded speed {speed} exceeds max_speed {self.max_speed}")

@@ -27,9 +27,7 @@ def grid_scenario(draw):
     obstacles = frozenset(
         draw(
             st.sets(
-                st.builds(
-                    Point, st.integers(0, GRID_SIZE - 1), st.integers(0, GRID_SIZE - 1)
-                ),
+                st.builds(Point, st.integers(0, GRID_SIZE - 1), st.integers(0, GRID_SIZE - 1)),
                 max_size=GRID_SIZE * GRID_SIZE // 3,
             )
         )

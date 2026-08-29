@@ -34,9 +34,7 @@ class Simulator:
 
         for step in range(1, self.max_steps + 1):
             try:
-                obstacle_map = self.safety_monitor.check_sensor(
-                    self.perception, dynamic_obstacles
-                )
+                obstacle_map = self.safety_monitor.check_sensor(self.perception, dynamic_obstacles)
             except SafetyViolation as exc:
                 return MissionResult(False, path_taken, str(exc), step - 1)
 
