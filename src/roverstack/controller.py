@@ -24,7 +24,9 @@ class PIDController:
             raise ValueError("dt must be positive")
 
         self._integral += error * dt
-        derivative = 0.0 if self._prev_error is None else (error - self._prev_error) / dt
+        derivative = (
+            0.0 if self._prev_error is None else (error - self._prev_error) / dt
+        )
         self._prev_error = error
 
         output = self.kp * error + self.ki * self._integral + self.kd * derivative
