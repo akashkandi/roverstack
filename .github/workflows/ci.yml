@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch: {}
 
 jobs:
   lint:
@@ -15,8 +16,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install -e .
-      - run: pip install ruff
+      - run: pip install -e ".[dev]"
       - run: ruff check src tests
       - run: ruff format --check src tests
 
@@ -28,12 +28,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install -e .
-      - run: pip install mypy
+      - run: pip install -e ".[dev]"
       - run: mypy src
 
-  test:
-    name: Test suite
+  unit-tests:
+    name: Unit tests
     needs: [lint, typecheck]
     runs-on: ubuntu-latest
     strategy:
@@ -44,6 +43,74 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - run: pip install -e .
-      - run: pip install pytest hypothesis
-      - run: pytest -v
+      - run: pip install -e ".[dev]"
+      - run: pytest tests/unit --no-cov
+
+  integration-tests:
+    name: Integration tests
+    needs: [unit-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev]"
+      - run: pytest tests/integration --no-cov
+
+  property-tests:
+    name: Property-based tests (Hypothesis)
+    needs: [unit-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev]"
+      - run: pytest tests/property --no-cov
+
+  e2e-tests:
+    name: End-to-end scenario tests
+    needs: [integration-tests, property-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev]"
+      - run: pytest tests/e2e --no-cov
+
+  coverage-gate:
+    name: Coverage gate (>=90%)
+    needs: [integration-tests, property-tests, e2e-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev]"
+      - run: pytest
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+  docker-build:
+    name: Build & smoke-test Docker image
+    needs: [coverage-gate]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: roverstack:ci
+          load: true
+      - name: Run full suite inside the built image
+        run: docker run --rm roverstack:ci
