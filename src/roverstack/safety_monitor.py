@@ -22,13 +22,13 @@ class SafetyMonitor:
     def check_sensor(self, perception, dynamic_obstacles=frozenset()):
         try:
             obstacle_map = perception.scan(dynamic_obstacles)
-        except SensorFault:
+        except SensorFault as err:
             self._consecutive_faults += 1
             if self._consecutive_faults >= self.max_consecutive_sensor_faults:
                 raise SafetyViolation(
                     f"sensor faulted {self._consecutive_faults} time(s) in a row "
                     f"(limit {self.max_consecutive_sensor_faults}); commanding stop"
-                )
+                ) from err
             raise
         else:
             self._consecutive_faults = 0

@@ -8,5 +8,33 @@ version = "0.1.0"
 requires-python = ">=3.9"
 dependencies = []
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "hypothesis>=6.100",
+    "ruff>=0.6.0",
+    "mypy>=1.10",
+]
+
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra --cov=roverstack --cov-report=term-missing --cov-report=xml --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["src/roverstack"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+ignore_missing_imports = true
